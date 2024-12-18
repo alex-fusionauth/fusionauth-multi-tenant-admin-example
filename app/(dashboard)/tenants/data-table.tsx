@@ -95,7 +95,7 @@ export default function DataTable({ data }: { data: Tenant[] }) {
                         <TableRow key={item.id}>
                             <TableCell>
                                 <Link
-                                    href={`/tenants/${item.id}/dashboard`}
+                                    href={`/tenants/${item.id}/applications`}
                                     className="text-blue-600 hover:underline"
                                 >
                                     {item.name}
