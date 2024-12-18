@@ -6,109 +6,92 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { JWTPayload } from 'jose';
 
+import { FusionAuthClient } from '@fusionauth/typescript-client';
+
 export interface SessionPayload extends JWTPayload {
     roles?: string[];
 }
 
-export const verifySession = cache(async () => {
-    const app_at = (await cookies()).get('app.at')?.value;
-    const session = await validateUser(app_at);
+class FusionAuthClientWithSession extends FusionAuthClient {
+    private session: SessionPayload | null = null;
+    private redirectPath: string;
 
-    if (!session) {
-        redirect('/auth/login')
+    constructor(apiKey: string, baseUrl: string, redirectPath = '/auth/login') {
+        super(apiKey, baseUrl);
+        this.redirectPath = redirectPath;
     }
 
-    if (!session?.sub) {
-        redirect('/auth/login')
+
+    private async ensureSession() {
+        if (this.session) return; // Session already verified
+        try {
+
+            const app_at = (await cookies()).get('app.at')?.value;
+            const session = await validateUser(app_at);
+
+            if (!session || !session.sub) {
+                redirect(this.redirectPath); // Redirect if session is invalid
+                // Following line prevents type errors; redirect ensures it's never reached
+                return;
+            }
+            this.session = session as SessionPayload;
+        } catch (error) {
+            console.error("Error during session verification:", error);
+            redirect(this.redirectPath);
+        }
     }
 
-    return { isAuth: true, ...session } as unknown as SessionPayload;
-});
-
-export const callFusionAuth = (path: string, options?: RequestInit) => {
-    const headers = new Headers({ 'Authorization': process.env.FUSIONAUTH_API_KEY! });
-
-    if (options?.headers) {
-        // @ts-ignore: ugh
-        options.headers.forEach((value, key) => {
-            headers.append(key, value)
-        });
+    private cachedRetrieveTenants = cache(super.retrieveTenants.bind(this));  // Correct binding
+    public async retrieveTenants() {
+        await this.ensureSession();
+        return this.cachedRetrieveTenants();
     }
 
-    return fetch(process.env.NEXT_PUBLIC_FUSIONAUTH_URL! + path, {
-        ...options,
-        headers,
+    private cachedRetrieveTenant = cache(super.retrieveTenant.bind(this)); // Correct binding
+    public async retrieveTenant(tenantId: string) {
+        await this.ensureSession();
+        return this.cachedRetrieveTenant(tenantId);
+    }
 
-    })
+
+    private cachedRetrieveApplications = cache(super.retrieveApplications.bind(this));
+    public async retrieveApplications() {
+        await this.ensureSession();
+        return this.cachedRetrieveApplications();
+    }
+
+    private cachedRetrieveApplication = cache(super.retrieveApplication.bind(this));
+    public async retrieveApplication(applicationId: string) {
+        await this.ensureSession();
+        return this.cachedRetrieveApplication(applicationId);
+    }
 }
 
-export const getTenants = cache(async () => {
-    const session = await verifySession();
-    if (!session) return [];
 
-    try {
-        const resp = await callFusionAuth('/api/tenant');
+export const client = new FusionAuthClientWithSession(process.env.FUSIONAUTH_API_KEY!, process.env.NEXT_PUBLIC_FUSIONAUTH_URL!)
 
-        if (resp.ok) {
-            return (await resp.json()).tenants;
-        } else {
-            console.error("Error retrieving tenants:", `${resp.status}: ${resp.statusText}`);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-    }
-})
 
-export const getTenant = cache(async (tenantId: string) => {
-    const session = await verifySession();
-    if (!session) return [];
+//User
 
-    try {
-        const resp = await callFusionAuth('/api/tenant/' + tenantId);
+// export const getUsersByTenant = cache(async (tenantId?: string) => {
+//     const options = tenantId ? { headers: new Headers({ 'X-FusionAuth-TenantId': tenantId }) } : undefined;
+//     return (await handleFusionAuthRequest('/api/user/search?queryString=*', options))?.users;
+// });
 
-        if (resp.ok) {
-            return (await resp.json()).tenant;
-        } else {
-            console.error("Error retrieving tenants:", `${resp.status}: ${resp.statusText}`);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-    }
-})
+// export const getUsersByApplication = cache(async (applicationId: string) => {
+//     const options: RequestInit = {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({
+//             search: {
+//                 numberOfResults: 50,
+//                 query: `{"bool":{"must":[{"nested":{"path":"registrations","query":{"bool":{"must":[{"match":{"registrations.applicationId":"${applicationId}"}}]}}}}]}}`,
+//                 startRow: 0,
+//             },
+//         }),
+//     };
 
-export const getApplications = cache(async (tenantId?: string) => {
-    const session = await verifySession();
-    if (!session) return [];
-
-    try {
-        const resp = tenantId ?
-            await callFusionAuth('/api/application', {
-                headers: new Headers({ 'X-FusionAuth-TenantId': tenantId })
-            }) :
-            await callFusionAuth('/api/application');
-        if (resp.ok) {
-            return (await resp.json()).applications;
-        } else {
-            console.error("Error retrieving applications:", `${resp.status}: ${resp.statusText}`);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-    }
-})
-
-export const getApplication = cache(async (applicationId: string) => {
-    const session = await verifySession();
-    if (!session) return [];
-
-    try {
-        const resp = await callFusionAuth('/api/application/' + applicationId);
-
-        if (resp.ok) {
-            return (await resp.json()).application;
-        } else {
-            console.error("Error retrieving application:", `${resp.status}: ${resp.statusText}`);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-    }
-})
+//     return (await handleFusionAuthRequest<{ users: any[] }>('/api/user/search', options))?.users;
+// });

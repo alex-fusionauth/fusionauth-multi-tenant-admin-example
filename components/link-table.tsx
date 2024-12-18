@@ -27,19 +27,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 
-interface Tenant {
-    name: string
-    id: string
-}
-
-export default function LinkTable({ head, data, linkBase, linkPath }: { head: string[], data: Tenant[], linkBase: string, linkPath: string }) {
+export default function LinkTable<T extends { id?: string; name?: string }>({ head, data, linkBase, linkPath }: { head: string[], data: T[], linkBase: string, linkPath: string }) {
     const [searchQuery, setSearchQuery] = React.useState("")
     const [resultsPerPage, setResultsPerPage] = React.useState("25")
 
     const filteredData = data?.filter(
         (item) =>
-            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.id.toLowerCase().includes(searchQuery.toLowerCase())
+            item?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item?.id?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
     return (

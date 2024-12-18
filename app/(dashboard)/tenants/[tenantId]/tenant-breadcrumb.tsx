@@ -1,4 +1,4 @@
-import { getTenant } from '@/lib/fusionauth-dal';
+import { client } from '@/lib/fusionauth-dal';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb';
 
 export default async function TenantBreadcrumb({
@@ -6,7 +6,7 @@ export default async function TenantBreadcrumb({
 }: {
   tenantId: string
 }) {
-  const tenant = await getTenant(tenantId);
+  const tenant = (await client.retrieveTenant(tenantId)).response.tenant;
 
   return (
     <Breadcrumb>
@@ -20,7 +20,7 @@ export default async function TenantBreadcrumb({
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href={`/tenants/${tenantId}/applications`}>{tenant.name}</BreadcrumbLink>
+          <BreadcrumbLink href={`/tenants/${tenantId}/applications`}>{tenant?.name || tenantId}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
