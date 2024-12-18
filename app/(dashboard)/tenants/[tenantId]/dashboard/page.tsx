@@ -19,6 +19,8 @@ import {
 
 import { getTenant } from '@/lib/fusionauth-dal';
 import { Button } from '@/components/ui/button';
+import TenantBreadcrumb from '../breadcrumb';
+import TenantTabs from '../tenant-tabs';
 
 // TODO: Update misssing TODOs
 
@@ -31,21 +33,26 @@ export default async function TenantDashboard({
     const tenant = await getTenant(tenantId);
 
     return (
-        <div className="space-y-6">
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="outline">View JSON</Button>
-                </DialogTrigger>
-                <DialogContent className=''>
-                    <DialogHeader>
-                        <DialogTitle>JSON Details</DialogTitle>
-                    </DialogHeader>
-                    <pre className='max-h-[80vh] overflow-y-scroll'>
-                        <code className="language-json">{JSON.stringify(tenant, null, 2)}</code>
-                    </pre>
-                </DialogContent>
-            </Dialog>
-
+        <div
+            className="flex flex-col w-full gap-2 md:gap-4"
+        >
+            <TenantBreadcrumb tenantId={tenantId} />
+            <TenantTabs />
+            <div>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">View JSON</Button>
+                    </DialogTrigger>
+                    <DialogContent className=''>
+                        <DialogHeader>
+                            <DialogTitle>JSON Details</DialogTitle>
+                        </DialogHeader>
+                        <pre className='max-h-[80vh] overflow-y-scroll'>
+                            <code className="language-json">{JSON.stringify(tenant, null, 2)}</code>
+                        </pre>
+                    </DialogContent>
+                </Dialog>
+            </div>
             <Card>
                 <CardHeader>
                     <CardTitle>Details</CardTitle>

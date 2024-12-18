@@ -19,6 +19,8 @@ import {
 
 import { getTenant } from '@/lib/fusionauth-dal';
 import { Button } from '@/components/ui/button';
+import TenantBreadcrumb from '../breadcrumb';
+import TenantTabs from '../tenant-tabs';
 
 // TODO: Update misssing TODOs
 
@@ -31,8 +33,11 @@ export default async function TenantDashboard({
     const tenant = await getTenant(tenantId);
 
     return (
-        <div className="space-y-6">
-            Settings
+        <div
+            className="flex flex-col w-full gap-2 md:gap-4"
+        >
+            <TenantBreadcrumb tenantId={tenantId} />
+            <TenantTabs />
         </div>
     );
 }

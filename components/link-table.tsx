@@ -32,7 +32,7 @@ interface Tenant {
     id: string
 }
 
-export default function DataTable({ data }: { data: Tenant[] }) {
+export default function LinkTable({ head, data, linkBase, linkPath }: { head: string[], data: Tenant[], linkBase: string, linkPath: string }) {
     const [searchQuery, setSearchQuery] = React.useState("")
     const [resultsPerPage, setResultsPerPage] = React.useState("25")
 
@@ -43,8 +43,8 @@ export default function DataTable({ data }: { data: Tenant[] }) {
     )
 
     return (
-        <div className="space-y-4 p-4">
-            <div className="space-y-4">
+        <div className="flex flex-col w-full gap-2">
+            <div className="flex gap-2">
                 <Input
                     placeholder="Search on name or Id"
                     value={searchQuery}
@@ -63,30 +63,12 @@ export default function DataTable({ data }: { data: Tenant[] }) {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm">Results per page:</span>
-                    <Select value={resultsPerPage} onValueChange={setResultsPerPage}>
-                        <SelectTrigger className="w-[70px]">
-                            <SelectValue>{resultsPerPage}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="25">25</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="text-sm text-gray-600">
-                    Displaying 1 to {filteredData.length} of {filteredData.length}
-                </div>
-            </div>
-
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Id</TableHead>
+                        {head.map((item) => (
+                            <TableHead key={item}>{item}</TableHead>
+                        ))}
                         <TableHead className="text-right text-gray-600">Action</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -95,7 +77,7 @@ export default function DataTable({ data }: { data: Tenant[] }) {
                         <TableRow key={item.id}>
                             <TableCell>
                                 <Link
-                                    href={`applications/${item.id}/users`}
+                                    href={`/${linkBase}/${item.id}${linkPath}`}
                                     className="text-blue-600 hover:underline"
                                 >
                                     {item.name}
@@ -130,6 +112,25 @@ export default function DataTable({ data }: { data: Tenant[] }) {
                     ))}
                 </TableBody>
             </Table>
+
+            <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                    Displaying 1 to {filteredData.length} of {filteredData.length}
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm">Results per page:</span>
+                    <Select value={resultsPerPage} onValueChange={setResultsPerPage}>
+                        <SelectTrigger className="w-[70px]">
+                            <SelectValue>{resultsPerPage}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         </div>
     )
 }
