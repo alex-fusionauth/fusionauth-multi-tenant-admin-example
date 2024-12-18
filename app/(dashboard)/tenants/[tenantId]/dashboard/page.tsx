@@ -19,7 +19,7 @@ import {
 
 import { getTenant } from '@/lib/fusionauth-dal';
 import { Button } from '@/components/ui/button';
-import TenantBreadcrumb from '../breadcrumb';
+import TenantBreadcrumb from '../tenant-breadcrumb';
 import TenantTabs from '../tenant-tabs';
 
 // TODO: Update misssing TODOs

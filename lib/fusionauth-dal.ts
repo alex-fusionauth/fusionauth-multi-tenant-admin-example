@@ -95,3 +95,20 @@ export const getApplications = cache(async (tenantId?: string) => {
         console.error("Error:", error);
     }
 })
+
+export const getApplication = cache(async (applicationId: string) => {
+    const session = await verifySession();
+    if (!session) return [];
+
+    try {
+        const resp = await callFusionAuth('/api/application/' + applicationId);
+
+        if (resp.ok) {
+            return (await resp.json()).application;
+        } else {
+            console.error("Error retrieving application:", `${resp.status}: ${resp.statusText}`);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+    }
+})

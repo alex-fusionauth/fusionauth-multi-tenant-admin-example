@@ -1,5 +1,5 @@
 import { getApplications } from '@/lib/fusionauth-dal';
-import TenantBreadcrumb from '../breadcrumb';
+import TenantBreadcrumb from '../tenant-breadcrumb';
 import LinkTable from '@/components/link-table';
 import TenantTabs from '../tenant-tabs';
 

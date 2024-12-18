@@ -1,25 +1,5 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-
 import { getTenant } from '@/lib/fusionauth-dal';
-import { Button } from '@/components/ui/button';
-import TenantBreadcrumb from '../breadcrumb';
+import TenantBreadcrumb from '../tenant-breadcrumb';
 import TenantTabs from '../tenant-tabs';
 
 // TODO: Update misssing TODOs

@@ -1,18 +1,21 @@
-import { getApplications } from '@/lib/fusionauth-dal';
+import { getApplication } from '@/lib/fusionauth-dal';
+import ApplicationTabs from '../application-tabs';
+import ApplicationBreadcrumb from '../application-breadcrumb';
 
 export default async function Users({
   params,
 }: {
-  params: Promise<{ tenantId: string }>
+  params: Promise<{ tenantId: string, applicationId: string }>
 }) {
   const tenantId = (await params).tenantId;
-  const applications = await getApplications(tenantId);
+  const applicationId = (await params).applicationId;
+  const application = await getApplication(applicationId);
   return (
     <div
-      className="flex flex-col w-full"
+      className="flex flex-col w-full gap-2 md:gap-4"
     >
-      Application Settings
-
+      <ApplicationBreadcrumb tenantId={tenantId} applicationId={applicationId} />
+      <ApplicationTabs />
     </div>
   );
 }
