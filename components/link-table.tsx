@@ -79,7 +79,7 @@ export default function LinkTable<T extends { id?: string; name?: string; userna
                                 </Link>
                             </TableCell>
                             <TableCell className="font-mono">{item.id}</TableCell>
-                            <TableCell className="text-right">
+                            <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="w-[100px]">

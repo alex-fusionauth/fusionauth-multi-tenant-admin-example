@@ -8,7 +8,7 @@ export default async function TabsLayout({
   params: Promise<{ userId: string }>
 }) {
   const userId = (await params).userId;
-  const { user, emailVerificationId } = (await client.retrieveUser(userId)).response;
+  const { user } = (await client.retrieveUser(userId)).response;
   return (
     <div
       className="flex flex-col w-full"
@@ -24,13 +24,17 @@ export default async function TabsLayout({
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            {user?.twoFactor ? <></> :
+          {user?.twoFactor ?
+            <TableRow>
+
+            </TableRow>
+            :
+            <TableRow>
               <TableCell colSpan={5} className="text-center text-muted-foreground">
                 No methods have been configured
               </TableCell>
-            }
-          </TableRow>
+            </TableRow>
+          }
         </TableBody>
       </Table>
     </div>
