@@ -1,0 +1,105 @@
+# Multi-Tenant Example Application
+
+The Multi-Tenant Admin Application is a "wrapper" around FusionAuth's standard API's that uses our roles to create a granular view for admins.
+
+The goal is to help others understand how they can use multi-tenancy when addressing GitHub Issue: [Feature: Add one or more Tenant scoped roles for the FusionAuth UI](https://github.com/FusionAuth/fusionauth-issues/issues/91).
+
+## Role breakdown
+`service:resource:action`
+
+- service: Any noun found in API 
+    - Example: `*` | `tenant`, `application`, `role`, `group`, `user`
+- resource: `uuid` of service
+    - Example: `df6d3c35-bedb-4512-8d03-94e7289ae5f5`
+- action: CRUD access to resource
+    - Example `view` | `create` | `update` | `delete`
+
+## Tenants
+[Tenants](https://fusionauth.io/docs/get-started/core-concepts/tenants)
+
+We have a specific Multi-Tenant Tenant for our external application. Then any number of tenants can be created, viewed from this tenant.
+
+- Multi-Tenant Tenant = `df6d3c35-bedb-4512-8d03-94e7289ae5f5`;
+- New Tenant A = `29626c30-485e-4c05-88cc-cc398b90d67a`;
+
+## Applications
+[Applications](https://fusionauth.io/docs/get-started/core-concepts/applications)
+
+The multi-tenant Application will be the only app that is under the `Multi-Tenant` tenant. 
+This application will hold all of the roles needed.
+
+- Multi-Tenant - Tenant(`df6d3c35-bedb-4512-8d03-94e7289ae5f5`)
+    - Multi-Tenant - App(`517abe38-96c4-4d20-b29d-165d5944b162`)
+
+## Roles
+[Roles](https://fusionauth.io/docs/get-started/core-concepts/roles)
+
+Roles are passed in the [user access_token](https://fusionauth.io/docs/get-started/core-concepts/authentication-authorization#authorization-in-fusionauth). You can find more details about this in [FusionAuth's Hosted Backend docs](https://fusionauth.io/docs/apis/hosted-backend).
+
+### Special Roles
+
+These roles allow access high level administration and are added to the multi-tenant application.
+
+- Multi-Tenant Tenant(`df6d3c35-bedb-4512-8d03-94e7289ae5f5`)
+    - Multi-Tenant App(`517abe38-96c4-4d20-b29d-165d5944b162`)
+        - RoleSuperAdmin(`*:*:*`)
+        - RoleTenantAnyAdmin(`tenant:*:*`)
+        - RoleTenantAnyView(`tenant:*:view`)
+        - RoleTenantAnyCreate(`tenant:*:create`)
+        - RoleTenantAnyUpdate(`tenant:*:update`)
+        - RoleTenantAnyDelete(`tenant:*:delete`)
+        - RoleAnyAppAdmin(`application:*:*`)
+        - RoleAnyAppView(`application:*:view`)
+        - RoleAnyAppCreate(`application:*:create`)
+        - RoleAnyAppUpdate(`application:*:update`)
+        - RoleAnyAppDelete(`application:*:delete`)
+        - ...
+
+
+### Specific Resource Roles
+
+These roles are added to the multi-tenant application specifically for access to other resources.
+
+- Multi-Tenant Tenant(`df6d3c35-bedb-4512-8d03-94e7289ae5f5`)
+    - Multi-Tenant App(`517abe38-96c4-4d20-b29d-165d5944b162`)
+        - RoleTenantAdmin(`tenant:df6d3c35-bedb-4512-8d03-94e7289ae5f5:*`)
+        - RoleTenantView(`tenant:df6d3c35-bedb-4512-8d03-94e7289ae5f5:view`)
+        - RoleTenantAdmin(`tenant:29626c30-485e-4c05-88cc-cc398b90d67a:*`)
+        - RoleTenantView(`tenant:29626c30-485e-4c05-88cc-cc398b90d67a:view`)
+        - RoleTenantCreate(`tenant:29626c30-485e-4c05-88cc-cc398b90d67a:create`)
+        - RoleTenantUpdate(`tenant:29626c30-485e-4c05-88cc-cc398b90d67a:update`)
+        - RoleTenantDelete(`tenant:29626c30-485e-4c05-88cc-cc398b90d67a:delete`)
+
+
+
+<!-- TODO: Do we need this, is it easier??
+
+## Groups 
+[Groups](https://fusionauth.io/docs/get-started/core-concepts/groups)
+
+
+| Group | Group Description
+| --- | --- |
+| `*:*:*`       |   Super Admin     |
+| `tenant:*:*`  |   Tenant Admin    |
+| `tenant:df6d3c35-bedb-4512-8d03-94e7289ae5f5:*`   |   Tenant Unique Admin     |
+| `tenant:df6d3c35-bedb-4512-8d03-94e7289ae5f5:view`    |	Tenant Unique View Only     |
+| `tenant:*:view`   | Any Tenant View Only     | -->
+
+## User
+[Users](https://fusionauth.io/docs/get-started/core-concepts/users)
+
+### Examples
+
+`UserA` has view access to a single tenant and within that tenant they can see all applications within that tenant.
+
+app.at
+```json
+...
+"roles": [
+    "tenant:df6d3c35-bedb-4512-8d03-94e7289ae5f5:view",
+     "application:*:view"
+]
+```
+
+This works because the roles provide both viewing access in the application as well as API filtering in the backend API calls.
