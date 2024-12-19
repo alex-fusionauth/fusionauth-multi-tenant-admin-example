@@ -42,7 +42,7 @@ export default function ApplicationUsersTable({ users }: { users: User[] }) {
     const filteredData = users;
 
     return (
-        <div className="flex flex-col w-full gap-2">
+        <div className="flex flex-col w-full gap-2 h-[80vh]">
             <div className="flex gap-2">
                 <Input
                     placeholder="Search on name or Id"
@@ -63,7 +63,7 @@ export default function ApplicationUsersTable({ users }: { users: User[] }) {
             </div>
 
             <Table>
-                <TableHeader>
+                <TableHeader className='sticky top-0 bg-background'>
                     <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Id</TableHead>
