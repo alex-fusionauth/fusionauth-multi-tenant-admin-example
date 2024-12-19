@@ -78,69 +78,53 @@ class FusionAuthClientWithSession extends FusionAuthClient {
     // Tenants
     public async retrieveTenants() {
         await this.ensureSession();
-
-        const cached = await cache(async () => {
-            const resp = await super.retrieveTenants();
-            resp.response.tenants = resp?.response?.tenants?.filter(f => this.roleValidation(Service.Tenant, f?.id, Action.View));
-            return resp;
-        })();
-        return cached;
+        const resp = await super.retrieveTenants();
+        resp.response.tenants = resp?.response?.tenants?.filter(f => this.roleValidation(Service.Tenant, f?.id, Action.View));
+        return resp;
     }
 
     public async retrieveTenant(tenantId: UUID) {
         await this.ensureSession();
-
-        const cached = await cache(async () => {
-            const resp = await super.retrieveTenant(tenantId);
-            resp.response.tenant = this.roleValidation(Service.Tenant, resp?.response?.tenant?.id, Action.View) ?
-                resp.response.tenant : undefined;
-            return resp;
-        })();
-        return cached;
+        const resp = await super.retrieveTenant(tenantId);
+        resp.response.tenant = this.roleValidation(Service.Tenant, resp?.response?.tenant?.id, Action.View) ?
+            resp.response.tenant : undefined;
+        return resp;
     }
 
     // Applications
     public async retrieveApplications() {
         await this.ensureSession();
-
-        const cached = await cache(async () => {
-            const resp = await super.retrieveApplications();
-            resp.response.applications = resp?.response?.applications?.filter(f => this.roleValidation(Service.Application, f?.id, Action.View));
-            return resp;
-        })();
-        return cached;
+        const resp = await super.retrieveApplications();
+        resp.response.applications = resp?.response?.applications?.filter(f => this.roleValidation(Service.Application, f?.id, Action.View));
+        return resp;
     }
 
     public async retrieveApplication(applicationId: UUID) {
         await this.ensureSession();
-
-        const cached = await cache(async () => {
-            const resp = await super.retrieveApplication(applicationId);
-            resp.response.application = this.roleValidation(Service.Application, resp?.response?.application?.id, Action.View) ?
-                resp.response.application : undefined;
-            return resp;
-        })();
-        return cached;
+        const resp = await super.retrieveApplication(applicationId);
+        resp.response.application = this.roleValidation(Service.Application, resp?.response?.application?.id, Action.View) ?
+            resp.response.application : undefined;
+        return resp;
     }
 
     // Users
+    // TODO: make this recursive as filter may impact result size
     public async searchUsersByQuery(request: SearchRequest) {
         await this.ensureSession();
-
-        const cached = await cache(async () => {
-            const resp = await super.searchUsersByQuery(request);
-            resp.response.users = resp?.response?.users?.filter(f => this.roleValidation(Service.User, f?.id, Action.View));
-            return resp;
-        })();
-        return cached;
+        request.search?.numberOfResults
+        const resp = await super.searchUsersByQuery(request);
+        resp.response.users = resp?.response?.users?.filter(f => this.roleValidation(Service.Tenant, f?.tenantId, Action.View)); // Only Users in Tenant
+        resp.response.users = resp?.response?.users?.filter(f => this.roleValidation(Service.User, f?.id, Action.View)); // Must have role to see users
+        return resp;
     }
 
-    private cachedRetrieveUser = cache(super.retrieveUser.bind(this));
     public async retrieveUser(userId: UUID) {
         await this.ensureSession();
-        return this.cachedRetrieveUser(userId);
+        const resp = await super.retrieveUser(userId);
+        resp.response.user = this.roleValidation(Service.User, resp?.response?.user?.id, Action.View) ?
+            resp.response.user : undefined;
+        return resp;
     }
+
 }
-
-
 export const client = new FusionAuthClientWithSession(process.env.FUSIONAUTH_API_KEY!, process.env.NEXT_PUBLIC_FUSIONAUTH_URL!)

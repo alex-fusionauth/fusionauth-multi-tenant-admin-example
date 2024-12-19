@@ -1,5 +1,6 @@
 import { client } from '@/lib/fusionauth-dal';
 import ApplicationUsersTable from './app-users-table';
+import { Sort } from '@fusionauth/typescript-client';
 
 export default async function Users({
   params,
@@ -10,7 +11,12 @@ export default async function Users({
   const applicationId = (await params).applicationId;
   const users = (await client.searchUsersByQuery({
     search: {
-      query: `{"bool":{"must":[{"nested":{"path":"registrations","query":{"bool":{"must":[{"match":{"registrations.applicationId":"${applicationId}"}}]}}}}]}}`
+      query: `{"bool":{"must":[{"nested":{"path":"registrations","query":{"bool":{"must":[{"match":{"registrations.applicationId":"${applicationId}"}}]}}}}]}}`,
+      numberOfResults: 25,
+      sortFields: [
+        { name: 'login', order: Sort.asc },
+        { name: 'fullName', order: Sort.asc },
+      ]
     },
   })).response.users;
 
