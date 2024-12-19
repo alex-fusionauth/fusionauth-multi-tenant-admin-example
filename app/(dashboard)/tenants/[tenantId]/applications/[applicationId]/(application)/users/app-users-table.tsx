@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { Search, RotateCcw, ChevronDown, Pencil, Copy, Eye } from 'lucide-react'
 import {
     Select,
@@ -26,25 +25,25 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
+import { useState } from 'react'
+import { Application, User } from '@fusionauth/typescript-client'
 
-interface Tenant {
-    name: string
-    id: string
-}
 
-export default function DataTable({ data }: { data: Tenant[] }) {
-    const [searchQuery, setSearchQuery] = React.useState("")
-    const [resultsPerPage, setResultsPerPage] = React.useState("25")
+export default function ApplicationUsersTable({ users }: { users: User[] }) {
+    const [searchQuery, setSearchQuery] = useState("")
+    const [resultsPerPage, setResultsPerPage] = useState("25")
+    const [data, setData] = useState<User[]>([]);
 
-    const filteredData = data?.filter(
-        (item) =>
-            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.id.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    // const filteredData = data?.filter(
+    //     (user) =>
+    //         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    //         user.id.toLowerCase().includes(searchQuery.toLowerCase())
+    // )
+    const filteredData = users;
 
     return (
-        <div className="space-y-4 p-4">
-            <div className="space-y-4">
+        <div className="flex flex-col w-full gap-2">
+            <div className="flex gap-2">
                 <Input
                     placeholder="Search on name or Id"
                     value={searchQuery}
@@ -63,46 +62,28 @@ export default function DataTable({ data }: { data: Tenant[] }) {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm">Results per page:</span>
-                    <Select value={resultsPerPage} onValueChange={setResultsPerPage}>
-                        <SelectTrigger className="w-[70px]">
-                            <SelectValue>{resultsPerPage}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="25">25</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="text-sm text-gray-600">
-                    Displaying 1 to {filteredData.length} of {filteredData.length}
-                </div>
-            </div>
-
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Id</TableHead>
-                        <TableHead className="text-right text-gray-600">Action</TableHead>
+                        <TableHead>Action</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {filteredData?.map((item) => (
-                        <TableRow key={item.id}>
+                    {filteredData?.map((user) => (
+                        <TableRow key={user.id}>
                             <TableCell>
                                 <Link
-                                    href={`applications/${item.id}/users`}
+                                    href={`/users/${user.id}`}
                                     className="text-blue-600 hover:underline"
                                 >
-                                    {item.name}
+                                    {user.email || user?.username || user?.fullName}
                                 </Link>
                             </TableCell>
-                            <TableCell className="font-mono">{item.id}</TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="font-mono">{user.id}</TableCell>
+
+                            <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="w-[100px]">
@@ -130,6 +111,25 @@ export default function DataTable({ data }: { data: Tenant[] }) {
                     ))}
                 </TableBody>
             </Table>
+
+            <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                    Displaying 1 to {filteredData.length} of {filteredData.length}
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm">Results per page:</span>
+                    <Select value={resultsPerPage} onValueChange={setResultsPerPage}>
+                        <SelectTrigger className="w-[70px]">
+                            <SelectValue>{resultsPerPage}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         </div>
     )
 }

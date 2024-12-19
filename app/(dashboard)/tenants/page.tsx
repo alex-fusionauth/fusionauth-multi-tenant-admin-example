@@ -1,13 +1,21 @@
-import { getTenants } from '@/lib/fusionauth-dal';
-import DataTable from './data-table';
+import { client } from '@/lib/fusionauth-dal';
+import TenantsTable from './tenants-table';
+import TenantsBreadcrumb from './tenants-breadcrumb';
+
 
 export default async function Tenants() {
-  const tenants = await getTenants();
+  client.setTenantId(null);
+  const tenants = (await client.retrieveTenants()).response.tenants;
+
   return (
     <div
-      className="flex flex-col w-full"
+      className="flex flex-col w-full gap-2"
     >
-      <DataTable data={tenants} />
+      <TenantsBreadcrumb />
+      {tenants ?
+        <TenantsTable tenants={tenants} />
+        :
+        <div>No Tenants Found...</div>}
     </div>
   );
 }

@@ -6,92 +6,101 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { JWTPayload } from 'jose';
 
+import { FusionAuthClient, UUID } from '@fusionauth/typescript-client';
+
 export interface SessionPayload extends JWTPayload {
     roles?: string[];
 }
 
-export const verifySession = cache(async () => {
-    const app_at = (await cookies()).get('app.at')?.value;
-    const session = await validateUser(app_at);
+class FusionAuthClientWithSession extends FusionAuthClient {
+    private session: SessionPayload | null = null;
+    private redirectPath: string;
 
-    if (!session) {
-        redirect('/auth/login')
+    constructor(apiKey: string, baseUrl: string, redirectPath = '/auth/login') {
+        super(apiKey, baseUrl);
+        this.redirectPath = redirectPath;
     }
 
-    if (!session?.sub) {
-        redirect('/auth/login')
+    //TODO: Do we care about sessions on API calls??
+
+    private async ensureSession() {
+        // if (this.session) return; // Session already verified
+        try {
+
+            const app_at = (await cookies()).get('app.at')?.value;
+            const session = await validateUser(app_at);
+
+            if (!session || !session.sub) {
+                redirect(this.redirectPath); // Redirect if session is invalid
+                // Following line prevents type errors; redirect ensures it's never reached
+                return;
+            }
+            this.session = session as SessionPayload;
+        } catch (error) {
+            console.error("Error during session verification:", error);
+            redirect(this.redirectPath);
+        }
     }
 
-    return { isAuth: true, ...session } as unknown as SessionPayload;
-});
+    private roleValidation(service: string, resource: string | UUID | null | undefined, action: string): boolean {
+        if (resource === null || resource === undefined) return false;
 
-export const callFusionAuth = (path: string, options?: RequestInit) => {
-    const headers = new Headers({ 'Authorization': process.env.FUSIONAUTH_API_KEY! });
+        if (!this.session || !this.session.roles) return false;
 
-    if (options?.headers) {
-        // @ts-ignore: ugh
-        options.headers.forEach((value, key) => {
-            headers.append(key, value)
-        });
+        const roles = this.session.roles;
+
+        if (roles.includes('*:*:*')) return true; // Super admin bypass
+        const resourceString = resource ? resource.toString() : null;
+
+        const hasResourceAccess = resourceString && roles.some(role => role === `${service}:${resourceString}:*` || role === `${service}:${resourceString}:${action}`);
+        if (hasResourceAccess) return true;
+
+        return roles.includes(`${service}:*:*`) || roles.includes(`${service}:*:${action}`);
+
     }
 
-    return fetch(process.env.NEXT_PUBLIC_FUSIONAUTH_URL! + path, {
-        ...options,
-        headers,
 
-    })
+    // Tenants
+
+    public async retrieveTenants() {
+        await this.ensureSession();
+
+        const cached = await cache(async () => {
+            console.log('cache miss')
+            const resp = await super.retrieveTenants();
+            const tenants = resp?.response?.tenants?.filter(tenant => this.roleValidation('tenant', tenant?.id, 'view'));
+            resp.response.tenants = tenants;
+            return resp;
+        })();
+        return cached;
+    }
+
+    private cachedRetrieveTenant = cache(super.retrieveTenant.bind(this)); // Correct binding
+    public async retrieveTenant(tenantId: string) {
+        await this.ensureSession();
+        return this.cachedRetrieveTenant(tenantId);
+    }
+
+    // Applications
+    private cachedRetrieveApplications = cache(super.retrieveApplications.bind(this));
+    public async retrieveApplications() {
+        await this.ensureSession();
+        return this.cachedRetrieveApplications();
+    }
+
+    private cachedRetrieveApplication = cache(super.retrieveApplication.bind(this));
+    public async retrieveApplication(applicationId: string) {
+        await this.ensureSession();
+        return this.cachedRetrieveApplication(applicationId);
+    }
+
+    // Users
+    private cachedRetrieveUser = cache(super.retrieveUser.bind(this));
+    public async retrieveUser(userId: UUID) {
+        await this.ensureSession();
+        return this.cachedRetrieveUser(userId);
+    }
 }
 
-export const getTenants = cache(async () => {
-    const session = await verifySession();
-    if (!session) return [];
 
-    try {
-        const resp = await callFusionAuth('/api/tenant');
-
-        if (resp.ok) {
-            return (await resp.json()).tenants;
-        } else {
-            console.error("Error retrieving tenants:", `${resp.status}: ${resp.statusText}`);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-    }
-})
-
-export const getTenant = cache(async (tenantId: string) => {
-    const session = await verifySession();
-    if (!session) return [];
-
-    try {
-        const resp = await callFusionAuth('/api/tenant/' + tenantId);
-
-        if (resp.ok) {
-            return (await resp.json()).tenant;
-        } else {
-            console.error("Error retrieving tenants:", `${resp.status}: ${resp.statusText}`);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-    }
-})
-
-export const getApplications = cache(async (tenantId?: string) => {
-    const session = await verifySession();
-    if (!session) return [];
-
-    try {
-        const resp = tenantId ?
-            await callFusionAuth('/api/application', {
-                headers: new Headers({ 'X-FusionAuth-TenantId': tenantId })
-            }) :
-            await callFusionAuth('/api/application');
-        if (resp.ok) {
-            return (await resp.json()).applications;
-        } else {
-            console.error("Error retrieving applications:", `${resp.status}: ${resp.statusText}`);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-    }
-})
+export const client = new FusionAuthClientWithSession(process.env.FUSIONAUTH_API_KEY!, process.env.NEXT_PUBLIC_FUSIONAUTH_URL!)
