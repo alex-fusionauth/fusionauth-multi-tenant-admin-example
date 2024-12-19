@@ -24,7 +24,7 @@ class FusionAuthClientWithSession extends FusionAuthClient {
     //TODO: Do we care about sessions on API calls??
 
     private async ensureSession() {
-        if (this.session) return; // Session already verified
+        // if (this.session) return; // Session already verified
         try {
 
             const app_at = (await cookies()).get('app.at')?.value;
@@ -42,11 +42,37 @@ class FusionAuthClientWithSession extends FusionAuthClient {
         }
     }
 
+    private roleValidation(service: string, resource: string | UUID | null | undefined, action: string): boolean {
+        if (resource === null || resource === undefined) return false;
+
+        if (!this.session || !this.session.roles) return false;
+
+        const roles = this.session.roles;
+
+        if (roles.includes('*:*:*')) return true; // Super admin bypass
+        const resourceString = resource ? resource.toString() : null;
+
+        const hasResourceAccess = resourceString && roles.some(role => role === `${service}:${resourceString}:*` || role === `${service}:${resourceString}:${action}`);
+        if (hasResourceAccess) return true;
+
+        return roles.includes(`${service}:*:*`) || roles.includes(`${service}:*:${action}`);
+
+    }
+
+
     // Tenants
-    private cachedRetrieveTenants = cache(super.retrieveTenants.bind(this));  // Correct binding
+
     public async retrieveTenants() {
         await this.ensureSession();
-        return this.cachedRetrieveTenants();
+
+        const cached = await cache(async () => {
+            console.log('cache miss')
+            const resp = await super.retrieveTenants();
+            const tenants = resp?.response?.tenants?.filter(tenant => this.roleValidation('tenant', tenant?.id, 'view'));
+            resp.response.tenants = tenants;
+            return resp;
+        })();
+        return cached;
     }
 
     private cachedRetrieveTenant = cache(super.retrieveTenant.bind(this)); // Correct binding
