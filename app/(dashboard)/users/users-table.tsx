@@ -92,7 +92,7 @@ export default function UsersTable({ usersWithTenant }: { usersWithTenant: Users
                             <TableCell className="font-mono">{user.username}</TableCell>
                             <TableCell className="font-mono">
                                 <Link
-                                    href={`/tenants/${user.tenant.id}`}
+                                    href={`/tenants/${user?.tenant?.id}`}
                                     className="text-blue-600 hover:underline"
                                 >
                                     {user.tenant.name}

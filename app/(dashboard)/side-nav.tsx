@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import {
   Users,
   Settings,
-  BarChart3,
   Building2,
   Group,
   Palette,
@@ -15,7 +14,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const navigation = [
+const navigationIcons = [
   { name: 'Tenants', href: '/tenants', icon: Building2 },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Groups', href: '/groups', icon: Group },
@@ -26,18 +25,19 @@ const navigation = [
   { name: 'System', href: '/system', icon: Monitor },
 ];
 
-export function SideNav() {
+export function SideNav({ navigation }: {
+  navigation: string[];
+}) {
   const pathname = usePathname();
-  // Filter navigation items based on user roles
-  const filteredNavigation = navigation.filter((item) => {
-    // Add your role-based logic here
-    return true; // Placeholder - implement actual role checks
-  });
+
+  const filteredNavigationIcons = navigationIcons.filter(icon =>
+    navigation.some(navItem => navItem === icon.name)
+  );
 
   return (
     <nav className="flex flex-col w-64 border-r bg-background">
       <div className="space-y-1 p-4">
-        {filteredNavigation.map((item) => {
+        {filteredNavigationIcons.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
             <Link

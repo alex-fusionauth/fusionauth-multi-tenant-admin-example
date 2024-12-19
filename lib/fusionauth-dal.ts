@@ -15,12 +15,14 @@ export interface SessionPayload extends JWTPayload {
 //TODO: Maybe we should use fetch to take advantage of caching https://nextjs.org/docs/app/building-your-application/data-fetching/fetching#caching-data-with-an-orm-or-database
 
 export enum Service {
+    SuperAdmin = '*',
     Tenant = 'tenant',
     Application = 'application',
     User = 'user',
 }
 
 export enum Action {
+    SuperAdmin = '*',
     View = 'view',
     Create = 'create',
     Update = 'update',
@@ -74,6 +76,10 @@ class FusionAuthClientWithSession extends FusionAuthClient {
 
     }
 
+    public async isSuperAdmin() {
+        await this.ensureSession();
+        return this.roleValidation(Service.SuperAdmin, '*', Action.SuperAdmin)
+    }
 
     // Tenants
     public async retrieveTenants() {
@@ -108,15 +114,54 @@ class FusionAuthClientWithSession extends FusionAuthClient {
     }
 
     // Users
-    // TODO: make this recursive as filter may impact result size
+    // TODO: Tried with 1M users and too slow!
     public async searchUsersByQuery(request: SearchRequest) {
         await this.ensureSession();
-        request.search?.numberOfResults
         const resp = await super.searchUsersByQuery(request);
-        resp.response.users = resp?.response?.users?.filter(f => this.roleValidation(Service.Tenant, f?.tenantId, Action.View)); // Only Users in Tenant
-        resp.response.users = resp?.response?.users?.filter(f => this.roleValidation(Service.User, f?.id, Action.View)); // Must have role to see users
+
+        const users = resp?.response?.users ?? [];
+
+        // // While resp.response.nextResults exists recursively call super.searchUsersByQuery
+        // let nextResults = resp.response.nextResults;
+
+        // while (nextResults) {
+        //     const nextResp = await super.searchUsersByQuery({
+        //         search: {
+        //             numberOfResults: 10000,
+        //             nextResults: resp.response.nextResults
+        //         }
+        //     });
+        //     users.push(...nextResp?.response?.users ?? []);
+        //     nextResults = nextResp.response.nextResults;
+        // }
+
+        // Filter roles
+        resp.response.users = users?.filter(f => this.roleValidation(Service.Tenant, f?.tenantId, Action.View)); // Only Users in Tenant
+        resp.response.users = users?.filter(f => this.roleValidation(Service.User, f?.id, Action.View)); // Must have role to see users
+
         return resp;
     }
+
+
+    // public async searchUsersByTenantQuery(tenantId: UUID, request: SearchRequest) {
+    //     await this.ensureSession();
+
+    //     // Validate that the current user can access this tenant
+    //     const allowedTenants = (await this.retrieveTenants()).response.tenants;
+    //     if (!allowedTenants?.find(f => f?.id === tenantId)) {
+    //         return {
+    //             response: {
+    //                 users: []
+    //             }
+    //         }
+    //     }
+
+    //     request.search = {
+    //         ...request.search,
+    //         queryString: `${request.search?.queryString ?? '*'} AND tenantId:${tenantId}`
+    //     }
+    //     return await super.searchUsersByQuery(request);
+    // }
 
     public async retrieveUser(userId: UUID) {
         await this.ensureSession();

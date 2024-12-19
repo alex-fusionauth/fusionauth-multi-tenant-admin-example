@@ -10,13 +10,13 @@ export default async function Users() {
   const users = (await client.searchUsersByQuery({
     search: {
       queryString: `*`,
-      numberOfResults: 25,
       sortFields: [
         { name: 'login', order: Sort.asc },
         { name: 'fullName', order: Sort.asc },
       ]
     },
   })).response.users;
+
 
   //TODO: Map unique first
   const usersWithTenant = await Promise.all(
@@ -34,7 +34,7 @@ export default async function Users() {
       className="flex flex-col w-full gap-2"
     >
       <UsersBreadcrumb />
-      <UsersTable usersWithTenant={usersWithTenant} />
+      {usersWithTenant && <UsersTable usersWithTenant={usersWithTenant} />}
     </div>
   );
 }

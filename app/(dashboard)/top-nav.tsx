@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import UserAvatar from './user-avatar';
+import UserAvatar from '@/components/user-avatar';
 
 export function TopNav() {
   return (

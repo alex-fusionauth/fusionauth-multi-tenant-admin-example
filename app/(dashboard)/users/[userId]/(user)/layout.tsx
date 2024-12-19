@@ -1,3 +1,4 @@
+import { client } from '@/lib/fusionauth-dal';
 import UserBreadcrumb from './user-breadcrumb';
 import UserProfile from './user-profile';
 import UserTabs from './user-tabs';
@@ -11,11 +12,13 @@ export default async function TabsLayout({
 }) {
   const userId = (await params).userId;
 
+  const isSuperAdmin = await client.isSuperAdmin();
+
   return (
     <div
       className="flex flex-col w-full gap-2 md:gap-4"
     >
-      <UserBreadcrumb userId={userId} />
+      {isSuperAdmin && <UserBreadcrumb userId={userId} />}
       <UserProfile userId={userId} />
       <UserTabs />
       {children}
