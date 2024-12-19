@@ -47,7 +47,11 @@ export default async function TabsLayout({
               {registrationsWithAppData?.map(registration => (
                 <TableRow key={registration.applicationId}>
                   <TableCell >
-                    <Link href={`/tenants/${registration.application?.tenantId}/applications/${registration.applicationId}`}>  {registration.application?.name || '(empty)'}</Link>
+                    <Link href={`/tenants/${registration.application?.tenantId}/applications/${registration.applicationId}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {registration.application?.name || '(empty)'}
+                    </Link>
                   </TableCell>
                   <TableCell >
                     {registration.username || '-'}
