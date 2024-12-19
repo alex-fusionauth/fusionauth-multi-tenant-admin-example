@@ -4,6 +4,7 @@ import TenantsBreadcrumb from './tenants-breadcrumb';
 
 
 export default async function Tenants() {
+  client.setTenantId(null);
   const tenants = (await client.retrieveTenants()).response.tenants;
   return (
     <div

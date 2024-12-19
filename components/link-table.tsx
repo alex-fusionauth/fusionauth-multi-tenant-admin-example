@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 
-export default function LinkTable<T extends { id?: string; name?: string }>({ head, data, linkBase, linkPath }: { head: string[], data: T[], linkBase: string, linkPath: string }) {
+export default function LinkTable<T extends { id?: string; name?: string; username?: string }>({ head, data, linkBase, linkPath }: { head: string[], data: T[], linkBase: string, linkPath: string }) {
     const [searchQuery, setSearchQuery] = React.useState("")
     const [resultsPerPage, setResultsPerPage] = React.useState("25")
 
@@ -75,7 +75,7 @@ export default function LinkTable<T extends { id?: string; name?: string }>({ he
                                     href={`/${linkBase}/${item.id}${linkPath}`}
                                     className="text-blue-600 hover:underline"
                                 >
-                                    {item.name}
+                                    {item?.name || item?.username || '(Empty)'}
                                 </Link>
                             </TableCell>
                             <TableCell className="font-mono">{item.id}</TableCell>

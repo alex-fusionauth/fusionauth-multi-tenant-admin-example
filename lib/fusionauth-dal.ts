@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { JWTPayload } from 'jose';
 
-import { FusionAuthClient } from '@fusionauth/typescript-client';
+import { FusionAuthClient, UUID } from '@fusionauth/typescript-client';
 
 export interface SessionPayload extends JWTPayload {
     roles?: string[];
@@ -21,6 +21,7 @@ class FusionAuthClientWithSession extends FusionAuthClient {
         this.redirectPath = redirectPath;
     }
 
+    //TODO: Do we care about sessions on API calls??
 
     private async ensureSession() {
         if (this.session) return; // Session already verified
@@ -41,6 +42,7 @@ class FusionAuthClientWithSession extends FusionAuthClient {
         }
     }
 
+    // Tenants
     private cachedRetrieveTenants = cache(super.retrieveTenants.bind(this));  // Correct binding
     public async retrieveTenants() {
         await this.ensureSession();
@@ -53,7 +55,7 @@ class FusionAuthClientWithSession extends FusionAuthClient {
         return this.cachedRetrieveTenant(tenantId);
     }
 
-
+    // Applications
     private cachedRetrieveApplications = cache(super.retrieveApplications.bind(this));
     public async retrieveApplications() {
         await this.ensureSession();
@@ -65,33 +67,14 @@ class FusionAuthClientWithSession extends FusionAuthClient {
         await this.ensureSession();
         return this.cachedRetrieveApplication(applicationId);
     }
+
+    // Users
+    private cachedRetrieveUser = cache(super.retrieveUser.bind(this));
+    public async retrieveUser(userId: UUID) {
+        await this.ensureSession();
+        return this.cachedRetrieveUser(userId);
+    }
 }
 
 
 export const client = new FusionAuthClientWithSession(process.env.FUSIONAUTH_API_KEY!, process.env.NEXT_PUBLIC_FUSIONAUTH_URL!)
-
-
-//User
-
-// export const getUsersByTenant = cache(async (tenantId?: string) => {
-//     const options = tenantId ? { headers: new Headers({ 'X-FusionAuth-TenantId': tenantId }) } : undefined;
-//     return (await handleFusionAuthRequest('/api/user/search?queryString=*', options))?.users;
-// });
-
-// export const getUsersByApplication = cache(async (applicationId: string) => {
-//     const options: RequestInit = {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//             search: {
-//                 numberOfResults: 50,
-//                 query: `{"bool":{"must":[{"nested":{"path":"registrations","query":{"bool":{"must":[{"match":{"registrations.applicationId":"${applicationId}"}}]}}}}]}}`,
-//                 startRow: 0,
-//             },
-//         }),
-//     };
-
-//     return (await handleFusionAuthRequest<{ users: any[] }>('/api/user/search', options))?.users;
-// });

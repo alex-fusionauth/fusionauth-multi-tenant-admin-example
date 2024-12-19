@@ -9,7 +9,7 @@ export default async function ApplicationBreadcrumb({
   applicationId: string
 }) {
   const tenant = (await client.retrieveTenant(tenantId)).response.tenant;
-  const application = (await client.retrieveApplication(tenantId)).response.application;
+  const application = (await client.retrieveApplication(applicationId)).response.application;
   return (
     <Breadcrumb>
       <BreadcrumbList>
