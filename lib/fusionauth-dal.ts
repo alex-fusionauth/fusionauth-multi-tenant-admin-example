@@ -55,8 +55,8 @@ class FusionAuthClientWithSession extends FusionAuthClient {
             this.session = session as SessionPayload;
         } catch (error) {
             console.error("Error during session verification:", error);
-            redirect(this.redirectPath);
         }
+        return false;
     }
 
     private roleValidation(service: Service, resource: string | UUID | null | undefined, action: Action): boolean {

@@ -21,7 +21,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   //TODO: Add blocking if roles don't allow access
-  if (!await client.isSuperAdmin()) {
+  if (!isOnAuthPage && !await client.isSuperAdmin()) {
     const okayPath = request.nextUrl.pathname.startsWith('/tenants') || request.nextUrl.pathname.startsWith('/users/');
     const dashboard = request.nextUrl.pathname.startsWith('/dashboard');
     if (!okayPath && !dashboard) {
