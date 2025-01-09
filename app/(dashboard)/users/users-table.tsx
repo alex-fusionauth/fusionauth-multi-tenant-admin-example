@@ -95,7 +95,7 @@ export default function UsersTable({ usersWithTenant }: { usersWithTenant: Users
                                     href={`/tenants/${user?.tenant?.id}`}
                                     className="text-blue-600 hover:underline"
                                 >
-                                    {user.tenant.name}
+                                    {user?.tenant?.name}
                                 </Link>
                             </TableCell>
                             <TableCell className="font-mono">{user?.insertInstant ? new Date(user.insertInstant).toLocaleString() : ''}</TableCell>
